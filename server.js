@@ -37,5 +37,29 @@ app.get("/verify-session", async (req, res) => {
   }
 });
 
+app.post("/ask", async (req, res) => {
+  try {
+    const { message } = req.body;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1000,
+        system: "You are BrokerPass, an expert AI study companion for the FNS40821 Certificate IV in Finance and Mortgage Broking (Australia). Help students understand ASIC compliance, loan products, client needs analysis, and professional practices. Be concise and exam-focused. Never give financial advice.",
+        messages: [{ role: "user", content: message }]
+      })
+    });
+    const data = await response.json();
+    res.json({ reply: data.content?.[0]?.text || "Sorry, try again." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log("BrokerPass API on port " + PORT));
